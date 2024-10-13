@@ -21,6 +21,8 @@ public class CreepingGame extends Frame {
     public static final int RUNNING = 1;
     public static final int FINISHED = 2;
 
+    public boolean GAME_OVER = false;
+
     private List<Ant> ant_List;
 
     private int Stick_Length;
@@ -34,6 +36,9 @@ public class CreepingGame extends Frame {
 
     private int Longest_Time = -99999;
     private int Shortest_Time = 99999;
+    private String Shortest_Situation = "";
+    private String Longest_Situation = "";
+    private String Current_Situation = "";
 
 
     private final BufferedImage BufImg = new BufferedImage(Constant.WINDOW_WIDTH, Constant.WINDOW_HEIGHT, BufferedImage.TYPE_INT_RGB);
@@ -51,6 +56,7 @@ public class CreepingGame extends Frame {
         else
         {
             this.totalRound = totalRound;
+            this.gameRound = totalRound-1;
         }
 
         InitFrame();
@@ -76,7 +82,10 @@ public class CreepingGame extends Frame {
     private void InitGame()
     {
         this.Round_Time = 0;
-        this.gameRound = 0;
+        if(totalRound == 0)
+            this.gameRound = 0;
+        else
+            this.gameRound = totalRound-1;
         this.stick = new Stick(this.Stick_Length);
         this.ant_List = new ArrayList<>();
 
@@ -102,18 +111,8 @@ public class CreepingGame extends Frame {
                 }
             }
         }).start();
-//        while(true)
-//        {
-//                repaint();
-//                try{
-//                    Thread.sleep(100);
-//
-//                }
-//                catch (InterruptedException e)
-//                {
-//                    e.printStackTrace();
-//                }
-//        }
+
+
 
 
 
@@ -127,10 +126,10 @@ public class CreepingGame extends Frame {
     @Override
     public void update(Graphics g) {
         Graphics buf_temp = this.BufImg.getGraphics();
-        g.setColor(Color.CYAN);
+        g.setColor(Color.BLACK);
         g.setFont(Constant.GAME_FONT);
-
-        stick.Draw_Stick(buf_temp);
+        if(!GAME_OVER)
+            stick.Draw_Stick(buf_temp);
 
         if (this.gameState == READY) {
             this.Round_Time = 0;
@@ -144,6 +143,7 @@ public class CreepingGame extends Frame {
                         int direction = gameRound >>> i & 1;
                         ant_List.get(i).Set_Direction(direction);
                     }
+                    this.Current_Situation = Get_Round_Situation();
 
                     Round_Time_Max = Calculate_Ans_Time();
                     Set_State(RUNNING);
@@ -154,18 +154,20 @@ public class CreepingGame extends Frame {
 
             else
             {
-                this.gameRound = totalRound-1;
-                for(int i=0;i<ant_num;i++)
-                {
-                    ant_List.get(i).Set_pos(ants_positions[i]);
-                }
-                for (int i = ant_List.size() - 1; i >= 0; i--) {
-                    int direction = gameRound >>> i & 1;
-                    ant_List.get(i).Set_Direction(direction);
-                }
+//                this.gameRound = totalRound-1;
+                if (gameRound < totalRound) {
+                    for(int i=0;i<ant_num;i++)
+                    {
+                        ant_List.get(i).Set_pos(ants_positions[i]);
+                    }
+                    for (int i = ant_List.size() - 1; i >= 0; i--) {
+                        int direction = gameRound >>> i & 1;
+                        ant_List.get(i).Set_Direction(direction);
+                    }
 
-                Round_Time_Max = Calculate_Ans_Time();
-                Set_State(RUNNING);
+                    Round_Time_Max = Calculate_Ans_Time();
+                    Set_State(RUNNING);
+                }
             }
         }
         else if (this.gameState == FINISHED)
@@ -173,19 +175,21 @@ public class CreepingGame extends Frame {
             if (this.Round_Time < this.Shortest_Time)
             {
                 this.Shortest_Time = this.Round_Time;
+                this.Shortest_Situation = this.Current_Situation;
             }
             if (this.Round_Time > this.Longest_Time)
             {
                 this.Longest_Time = this.Round_Time;
+                this.Longest_Situation = this.Current_Situation;
             }
-            g.drawString("第"+this.gameRound+"回合结束，用时"+this.Round_Time_Max+"秒",150,350);
+            g.drawString("第"+this.gameRound+"回合结束:"+this.Current_Situation+"用时"+this.Round_Time_Max+"秒",150,350);
             try {
                 Thread.sleep(500);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
 
-            System.out.println("第"+this.gameRound+"回合结束，用时"+this.Round_Time_Max+"秒");
+            System.out.println("第"+this.gameRound+"回合结束:"+this.Current_Situation+"用时"+this.Round_Time_Max+"秒");
             gameRound++;
             Set_State(READY);
         }
@@ -196,10 +200,11 @@ public class CreepingGame extends Frame {
                 double time_temp = Climb_time();
                 if(time_temp == 0)
                 {
-                    for (Ant ant:ant_List) {
-                        ant.Climb(1);
-                        ant.Draw_Ant(g);
-                    }
+                    Draw_Moving(1,g);
+//                    for (Ant ant:ant_List) {
+//                        ant.Climb(1);
+//                        ant.Draw_Ant(g);
+//                    }
                     Test_Collision();
                     try{
                         Thread.sleep(Constant.FPS);
@@ -216,12 +221,14 @@ public class CreepingGame extends Frame {
                 else if((time_temp+Time_temp) >= 1)
                 {
                     double time_left = 1-Time_temp;
-                    for (Ant ant:ant_List)
-                    {
-                       ant.Climb(time_left);
-                       ant.Draw_Ant(g);
-                       Time_temp = 1;
-                    }
+                    Draw_Moving(time_left,g);
+//                    for (Ant ant:ant_List)
+//                    {
+//                       ant.Climb(time_left);
+//                       ant.Draw_Ant(g);
+//                       Time_temp = 1;
+//                    }
+                    Time_temp = 1;
                     Test_Collision();
                     try{
                         Thread.sleep(Constant.FPS);
@@ -237,10 +244,11 @@ public class CreepingGame extends Frame {
                 else
                 {
                     Time_temp += time_temp;
-                    for (Ant ant:ant_List) {
-                        ant.Climb(time_temp);
-                        ant.Draw_Ant(g);
-                    }
+                    Draw_Moving(time_temp,g);
+//                    for (Ant ant:ant_List) {
+//                        ant.Climb(time_temp);
+//                        ant.Draw_Ant(g);
+//                    }
                     Test_Collision();
                 }
 
@@ -260,53 +268,124 @@ public class CreepingGame extends Frame {
                 Round_Time = (int)(temp);
                 Set_State(FINISHED);
             }
-            g.drawString("最短耗时为：" + this.Shortest_Time,50,100);
-            g.drawString( "最长耗时为： " + this.Longest_Time,50,130);
-            g.drawString( "本局当前耗时为： "+this.Round_Time ,50,160);
+            g.drawImage(BufImg,0,0,null);
+            g.drawString("最短耗时情况为:"+this.Shortest_Situation+" 耗费时间:"+this.Shortest_Time,150,100);
+            g.drawString( "最长耗时情况为:"+this.Longest_Situation+" 耗费时间:" + this.Longest_Time,150,130);
+            g.drawString( "本局当前耗时为： "+this.Round_Time ,150,160);
+            System.out.println("第"+this.gameRound+"回合，用时"+this.Round_Time+"秒");
 
-            if(totalRound == 0)
+
+        }
+//        g.drawImage(BufImg, 0, 0, null);
+        if(totalRound == 0)
+        {
+            if(gameRound >= 1 << ant_num) {
+                GAME_OVER = true;
+                buf_temp.dispose();
+
+                buf_temp.drawImage(BufImg, 0, 0, null);
+                g.drawImage(BufImg, 0, 0, null);
+                g.drawString("最短耗时情况为:"+this.Shortest_Situation+" 耗费时间:"+this.Shortest_Time,150,100);
+                g.drawString( "最长耗时情况为:"+this.Longest_Situation+" 耗费时间:" + this.Longest_Time,150,130);
+                g.drawString("关闭当前窗口开启新游戏",250,200);
+            }
+
+        }
+        else
+        {
+            if(gameRound >= totalRound)
             {
-                if(gameRound >= 1 << ant_num) {
-                    g.drawString("最短耗时为：" + this.Shortest_Time,50,100);
-                    g.drawString( "最长耗时为： " + this.Longest_Time,50,130);
-                    g.drawString("关闭当前窗口开启新游戏",50,250);
-                }
-
+                GAME_OVER = true;
+                buf_temp.dispose();
+                buf_temp.drawImage(BufImg, 0, 0, null);
+                g.drawImage(BufImg, 0, 0, null);
+                g.drawString("本局:"+this.Current_Situation+" 耗时：" + this.Shortest_Time,150,100);
+//                g.drawString("本局耗时为："+this.Round_Time,50,150);
+                g.drawString("关闭当前窗口开启新游戏",250,200);
             }
-            else
-            {
-                if(gameRound >= totalRound)
-                {
-                    g.drawString("本局耗时为："+this.Round_Time,50,150);
-                    g.drawString("关闭当前窗口开启新游戏",50,250);
-                }
-            }
-
-
-            }
+        }
     }
 
     public void Draw(Graphics g,double  time)
     {
+
         g.drawImage(BufImg, 0, 0, null);
-        g.drawString("最短耗时为：" + this.Shortest_Time,50,100);
-        g.drawString( "最长耗时为： " + this.Longest_Time,50,130);
-        g.drawString( "本局当前耗时为： "+ this.Round_Time ,50,160);
+        g.drawString("最短耗时情况为:"+this.Shortest_Situation+" 耗费时间:"+this.Shortest_Time,150,100);
+        g.drawString( "最长耗时情况为:"+this.Longest_Situation+" 耗费时间:" + this.Longest_Time,150,130);
+        g.drawString( "本局当前耗时为： "+time,150,160);
 
     }
 
+    public void Draw_Moving(double time_temp,Graphics g)
+    {
+        System.out.println("time_temp:"+time_temp);
+//        double t = 0;
+        int i=0;
+        int Total = (int)(time_temp/Constant.INC_TIME);
+        while(i<Total)
+        {
+            i++;
+            for (Ant ant:ant_List)
+            {
+                ant.Climb(Constant.INC_TIME);
+                ant.Draw_Ant(g);
+//                System.out.println("ant"+ant.order+" climbing,Position:"+ant.Get_pos());
+            }
+            Test_Collision();
+            try{
+                Thread.sleep(Constant.FPS);
+                Draw(g,this.Round_Time+i*Constant.INC_TIME);
+            }
+            catch (InterruptedException e)
+            {
+                e.printStackTrace();
+            }
+
+        }
+
+        System.out.println("i:"+i);
+         double eps_0 = 1e-30;
+//        System.out.println("eps_0:"+eps_0);
+        if((time_temp-Total*Constant.INC_TIME)>eps_0)
+        {
+            System.out.println("进入补时，time_temp:,"+time_temp+"t:"+Total*Constant.INC_TIME);
+//            System.out.println("t-time_temp-Constant.INC_TIME:"+(t-Constant.INC_TIME-time_temp));
+            for (Ant ant:ant_List)
+            {
+                ant.Climb(time_temp+Constant.INC_TIME-Total*Constant.INC_TIME);
+                ant.Draw_Ant(g);
+//                       Time_temp = 1;
+            }
+            Test_Collision();
+            try{
+                Thread.sleep(Constant.FPS);
+                Draw(g,this.Round_Time+time_temp);
+            }
+            catch (InterruptedException e)
+            {
+                e.printStackTrace();
+            }
+        }
+        Test_Collision();
 
 
 
+    }
 
-
-
-
-
-
-
-
-
+    public String Get_Round_Situation()
+    {
+        String situation = "";
+        for(int i=0;i<ant_num;i++)
+        {
+            situation += (i+1)+":";
+            if(ant_List.get(i).Get_Direction() == Ant.LEFT)
+                situation += "左";
+            else
+                situation += "右";
+            situation += " ";
+        }
+        return situation;
+    }
 
     public boolean IsFinished()
     {
@@ -375,11 +454,14 @@ public class CreepingGame extends Frame {
                {
                    double distance = ant_List.get(ant_order[i+1]).Get_pos()-ant_List.get(ant_order[i]).Get_pos();
                    double time = distance/(2*speed);
+
                    ans_time = Math.min(time,ans_time);
                    i = i+2;
                }
             }
         }
+        if(ans_time<0)
+            System.out.println("--------------------------------------ans_time<0----------------------------------------");
 
         return ans_time;
 

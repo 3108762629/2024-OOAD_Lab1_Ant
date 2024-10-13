@@ -18,7 +18,7 @@ public class Ant {
 
     private int direction = RIGHT;
 
-    private int order;
+    public int order;
 
     private int speed = 5;
 
@@ -37,7 +37,7 @@ public class Ant {
         else if(this.direction == LEFT)
         {
             this.pos = pos-this.speed*time;
-            if(this.pos < STICK_INIT_POSITION)
+            if(this.pos <= STICK_INIT_POSITION)
             {
                 pos = STICK_INIT_POSITION;
                 this.direction = STOP;
@@ -45,7 +45,7 @@ public class Ant {
         }
         else {
             this.pos = pos+this.speed*time;
-            if(this.pos >= Stick.length)
+            if(this.pos >= Stick.length+STICK_INIT_POSITION)
             {
                 pos = Stick.length + STICK_INIT_POSITION;
                 direction = STOP;
@@ -91,7 +91,7 @@ public class Ant {
 
     public void Draw_Ant(Graphics g)
     {
-        g.drawImage(ant_image,(int)this.pos,(int)STICK_INIT_HEIGHT,null);
+        g.drawImage(ant_image,(int)this.pos,(int)STICK_INIT_HEIGHT-25,null);
     }
 
     public double Get_Time()
