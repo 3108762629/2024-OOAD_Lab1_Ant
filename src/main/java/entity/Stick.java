@@ -25,5 +25,14 @@ public class Stick {
         g.drawImage(stick_Image,Constant.STICK_INIT_POSITION,Constant.STICK_INIT_HEIGHT,length,15,null);
     }
 
+    public boolean  Is_Climb_Out(Ant ant)
+    {
+       if(ant.Get_pos()<=Constant.STICK_INIT_POSITION+length || ant.Get_pos()>=Constant.STICK_INIT_POSITION+Stick.length)
+           return true;
+       else
+           return false;
+
+    }
+
 
 }

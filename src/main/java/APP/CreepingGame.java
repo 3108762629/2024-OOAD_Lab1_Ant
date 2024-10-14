@@ -272,7 +272,7 @@ public class CreepingGame extends Frame {
             g.drawString("最短耗时情况为:"+this.Shortest_Situation+" 耗费时间:"+this.Shortest_Time,150,100);
             g.drawString( "最长耗时情况为:"+this.Longest_Situation+" 耗费时间:" + this.Longest_Time,150,130);
             g.drawString( "本局当前耗时为： "+this.Round_Time ,150,160);
-            System.out.println("第"+this.gameRound+"回合，用时"+this.Round_Time+"秒");
+//            System.out.println("第"+this.gameRound+"回合，用时"+this.Round_Time+"秒");
 
 
         }
@@ -318,7 +318,7 @@ public class CreepingGame extends Frame {
 
     public void Draw_Moving(double time_temp,Graphics g)
     {
-        System.out.println("time_temp:"+time_temp);
+//        System.out.println("time_temp:"+time_temp);
 //        double t = 0;
         int i=0;
         int Total = (int)(time_temp/Constant.INC_TIME);
@@ -343,7 +343,7 @@ public class CreepingGame extends Frame {
 
         }
 
-        System.out.println("i:"+i);
+//        System.out.println("i:"+i);
          double eps_0 = 1e-30;
 //        System.out.println("eps_0:"+eps_0);
         if((time_temp-Total*Constant.INC_TIME)>eps_0)
